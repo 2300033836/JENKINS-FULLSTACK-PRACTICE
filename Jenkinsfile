@@ -6,7 +6,7 @@ pipeline {
         // ===== FRONTEND BUILD =====
         stage('Build Frontend') {
             steps {
-                dir('DEMOREACTAPP') {
+                dir('FRONTEND/Demoreactapp') {  // Correct folder path
                     bat 'npm install'
                     bat 'npm run build'
                 }
@@ -21,7 +21,7 @@ pipeline {
                     rmdir /S /Q "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\demoreactapp"
                 )
                 mkdir "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\demoreactapp"
-                xcopy /E /I /Y DEMOREACTAPP\\build\\* "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\demoreactapp"
+                xcopy /E /I /Y FRONTEND\\Demoreactapp\\build\\* "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\demoreactapp"
                 '''
             }
         }
@@ -29,7 +29,7 @@ pipeline {
         // ===== BACKEND BUILD =====
         stage('Build Backend') {
             steps {
-                dir('Demospringbootproject') {
+                dir('Demospringbootproject') {  // Ensure backend folder name matches repo
                     bat 'mvn clean package'
                 }
             }

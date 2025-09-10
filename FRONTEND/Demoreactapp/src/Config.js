@@ -1,6 +1,4 @@
-// config.js
 const config = {
-  API_URL: "http://localhost:1880/api/vehicles" // Spring Boot backend endpoint
+  API_URL: "http://localhost:8080/Demospringboot/vehicles"
 };
-
 export default config;

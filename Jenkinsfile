@@ -6,9 +6,13 @@ pipeline {
         // ===== FRONTEND BUILD =====
         stage('Build Frontend') {
             steps {
-                dir('FRONTEND/Demoreactapp') {  // Correct folder path
+                dir('FRONTEND/Demoreactapp') {  // Correct frontend folder
+                    echo '🔹 Installing frontend dependencies...'
                     bat 'npm install'
-                    bat 'npm run build'
+
+                    echo '🔹 Building frontend...'
+                    // Fail pipeline if build fails
+                    bat 'npm run build || exit /b 1'
                 }
             }
         }
@@ -16,21 +20,30 @@ pipeline {
         // ===== FRONTEND DEPLOY =====
         stage('Deploy Frontend to Tomcat') {
             steps {
-                bat '''
-                if exist "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\demoreactapp" (
-                    rmdir /S /Q "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\demoreactapp"
-                )
-                mkdir "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\demoreactapp"
-                xcopy /E /I /Y FRONTEND\\Demoreactapp\\build\\* "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\demoreactapp"
-                '''
+                script {
+                    def buildDir = "${WORKSPACE}\\FRONTEND\\Demoreactapp\\build"
+                    if (fileExists(buildDir)) {
+                        echo "🔹 Deploying frontend from ${buildDir}..."
+                        bat """
+                        if exist "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\demoreactapp" (
+                            rmdir /S /Q "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\demoreactapp"
+                        )
+                        mkdir "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\demoreactapp"
+                        xcopy /E /I /Y ${buildDir}\\* "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\demoreactapp"
+                        """
+                    } else {
+                        error "❌ Frontend build folder not found: ${buildDir}"
+                    }
+                }
             }
         }
 
         // ===== BACKEND BUILD =====
         stage('Build Backend') {
             steps {
-                dir('Demospringbootproject') {  // Ensure backend folder name matches repo
-                    bat 'mvn clean package'
+                dir('Demospringbootproject') {  // Folder containing pom.xml
+                    echo '🔹 Building backend with Maven...'
+                    bat 'mvn clean package || exit /b 1'
                 }
             }
         }
@@ -38,15 +51,23 @@ pipeline {
         // ===== BACKEND DEPLOY =====
         stage('Deploy Backend to Tomcat') {
             steps {
-                bat '''
-                if exist "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\Demospringboot.war" (
-                    del /Q "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\Demospringboot.war"
-                )
-                if exist "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\Demospringboot" (
-                    rmdir /S /Q "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\Demospringboot"
-                )
-                copy "Demospringbootproject\\target\\Demospringboot.war" "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\"
-                '''
+                script {
+                    def warFile = "${WORKSPACE}\\Demospringbootproject\\target\\Demospringboot.war"
+                    if (fileExists(warFile)) {
+                        echo "🔹 Deploying backend WAR: ${warFile}"
+                        bat """
+                        if exist "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\Demospringboot.war" (
+                            del /Q "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\Demospringboot.war"
+                        )
+                        if exist "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\Demospringboot" (
+                            rmdir /S /Q "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\Demospringboot"
+                        )
+                        copy "${warFile}" "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\"
+                        """
+                    } else {
+                        error "❌ Backend WAR file not found: ${warFile}"
+                    }
+                }
             }
         }
 

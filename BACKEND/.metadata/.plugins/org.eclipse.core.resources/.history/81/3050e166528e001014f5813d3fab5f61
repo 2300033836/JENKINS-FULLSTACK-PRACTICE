@@ -1,0 +1,53 @@
+package com.klef.controller;
+
+import com.klef.model.Vehicle;
+import com.klef.service.VehicleService;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/vehicles")
+ 
+@CrossOrigin(origins = "http://localhost:5173")
+
+public class VehicleController {
+
+    private final VehicleService vehicleService;
+
+    public VehicleController(VehicleService vehicleService) {
+        this.vehicleService = vehicleService;
+    }
+
+    @PostMapping
+    public Vehicle createVehicle(@RequestBody Vehicle vehicle) {
+        return vehicleService.saveVehicle(vehicle);
+    }
+
+    @GetMapping
+    public List<Vehicle> getVehicles() {
+        return vehicleService.getAllVehicles();
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteVehicle(@PathVariable Long id) {
+        vehicleService.deleteVehicle(id);
+    }
+    @RestController
+    public class HomeController {
+
+        @GetMapping("/")
+        public String home() {
+            return "Welcome to Demospringboot Application 🚀";
+        }
+        @RestController
+        public class HomeController1{
+
+            @GetMapping("/springboot")
+            public String home() {
+                return "Welcome to Demospringboot Application 🚀";
+            }
+    }
+
+    }
+}

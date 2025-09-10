@@ -1,0 +1,29 @@
+package com.klef.controller;
+
+import com.klef.model.Vehicle;
+import com.klef.service.VehicleService;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@CrossOrigin(origins = "http://localhost:3000") // React frontend
+@RequestMapping("/api/vehicles")
+public class VehicleController {
+
+    private final VehicleService vehicleService;
+
+    public VehicleController(VehicleService vehicleService) {
+        this.vehicleService = vehicleService;
+    }
+
+    @PostMapping
+    public Vehicle createVehicle(@RequestBody Vehicle vehicle) {
+        return vehicleService.saveVehicle(vehicle);
+    }
+
+    @GetMapping
+    public List<Vehicle> getVehicles() {
+        return vehicleService.getAllVehicles();
+    }
+}

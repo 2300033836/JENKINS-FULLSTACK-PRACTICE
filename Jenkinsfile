@@ -2,8 +2,6 @@ pipeline {
     agent any
 
     stages {
-
-        // ===== FRONTEND BUILD =====
         stage('Build Frontend') {
             steps {
                 dir('FRONTEND\\Demoreactapp') {
@@ -13,7 +11,6 @@ pipeline {
             }
         }
 
-        // ===== FRONTEND DEPLOY =====
         stage('Deploy Frontend to Tomcat') {
             steps {
                 bat '''
@@ -26,7 +23,6 @@ pipeline {
             }
         }
 
-        // ===== BACKEND BUILD =====
         stage('Build Backend') {
             steps {
                 dir('BACKEND\\Demospringbootproject') {
@@ -35,7 +31,6 @@ pipeline {
             }
         }
 
-        // ===== BACKEND DEPLOY =====
         stage('Deploy Backend to Tomcat') {
             steps {
                 bat '''
@@ -49,7 +44,6 @@ pipeline {
                 '''
             }
         }
-
     }
 
     post {

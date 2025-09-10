@@ -6,13 +6,12 @@ pipeline {
         // ===== FRONTEND BUILD =====
         stage('Build Frontend') {
             steps {
-                dir('FRONTEND/Demoreactapp') {  // Correct frontend folder
+                dir('FRONTEND/Demoreactapp') {  // Frontend folder
                     echo '🔹 Installing frontend dependencies...'
                     bat 'npm install'
 
                     echo '🔹 Building frontend...'
-                    // Fail pipeline if build fails
-                    bat 'npm run build || exit /b 1'
+                    bat 'npm run build || exit /b 1'  // Uses Vite's build config (outDir: build)
                 }
             }
         }
@@ -21,18 +20,18 @@ pipeline {
         stage('Deploy Frontend to Tomcat') {
             steps {
                 script {
-                    def buildDir = "${WORKSPACE}\\FRONTEND\\Demoreactapp\\build"
-                    if (fileExists(buildDir)) {
-                        echo "🔹 Deploying frontend from ${buildDir}..."
+                    def frontendBuild = "${WORKSPACE}\\FRONTEND\\Demoreactapp\\build"
+                    if (fileExists(frontendBuild)) {
+                        echo "🔹 Deploying frontend from ${frontendBuild}..."
                         bat """
-                        if exist "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\demoreactapp" (
-                            rmdir /S /Q "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\demoreactapp"
+                        if exist "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\ReactSpringBootCRUD" (
+                            rmdir /S /Q "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\ReactSpringBootCRUD"
                         )
-                        mkdir "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\demoreactapp"
-                        xcopy /E /I /Y ${buildDir}\\* "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\demoreactapp"
+                        mkdir "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\ReactSpringBootCRUD"
+                        xcopy /E /I /Y ${frontendBuild}\\* "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\ReactSpringBootCRUD"
                         """
                     } else {
-                        error "❌ Frontend build folder not found: ${buildDir}"
+                        error "❌ Frontend build folder not found: ${frontendBuild}"
                     }
                 }
             }
@@ -41,9 +40,26 @@ pipeline {
         // ===== BACKEND BUILD =====
         stage('Build Backend') {
             steps {
-                dir('Demospringbootproject') {  // Folder containing pom.xml
-                    echo '🔹 Building backend with Maven...'
-                    bat 'mvn clean package || exit /b 1'
+                script {
+                    // Auto-detect backend folder containing pom.xml
+                    def backendFolder = ''
+                    bat 'dir /B /S pom.xml > pom_files.txt'
+                    def pomFiles = readFile('pom_files.txt').split('\n')
+                    for (f in pomFiles) {
+                        if (f.contains('Demospringbootproject')) {  // Adjust to your backend folder
+                            backendFolder = f.replace('\\pom.xml','').replace("${WORKSPACE}\\","")
+                            break
+                        }
+                    }
+
+                    if (backendFolder == '') {
+                        error "❌ Could not find backend folder containing pom.xml"
+                    } else {
+                        echo "🔹 Backend folder detected: ${backendFolder}"
+                        dir(backendFolder) {
+                            bat 'mvn clean package || exit /b 1'
+                        }
+                    }
                 }
             }
         }
@@ -70,15 +86,14 @@ pipeline {
                 }
             }
         }
-
     }
 
     post {
         success {
-            echo '✅ Deployment Successful! Frontend on port 1880, Backend on port 8080.'
+            echo '✅ Fullstack Deployment Successful! Frontend on /ReactSpringBootCRUD, Backend on /Demospringboot'
         }
         failure {
-            echo '❌ Pipeline Failed. Check logs.'
+            echo '❌ Pipeline Failed. Check logs for details.'
         }
     }
 }

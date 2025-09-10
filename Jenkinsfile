@@ -6,12 +6,9 @@ pipeline {
         // ===== FRONTEND BUILD =====
         stage('Build Frontend') {
             steps {
-                dir('FRONTEND/Demoreactapp') {  // Correct frontend folder
-                    echo '🔹 Installing frontend dependencies...'
+                dir('FRONTEND\\Demoreactapp') {
                     bat 'npm install'
-
-                    echo '🔹 Building frontend...'
-                    bat 'npm run build || exit /b 1'
+                    bat 'npm run build'
                 }
             }
         }
@@ -29,34 +26,38 @@ pipeline {
             }
         }
 
+        // ===== BACKEND BUILD =====
         stage('Build Backend') {
-    steps {
-        dir('BACKEND/Demospringbootproject') {
-            echo "🔹 Building backend..."
-            bat '"C:\\Program Files\\Apache\\maven\\bin\\mvn.cmd" clean package -DskipTests'
+            steps {
+                dir('BACKEND\\Demospringbootproject') {
+                    bat 'mvn clean package'
+                }
+            }
         }
-    }
-}
 
-stage('Deploy Backend to Tomcat') {
-    steps {
-        script {
-            def warFile = "${workspace}\\BACKEND\\Demospringbootproject\\target\\Demospringboot.war"
-            def tomcatWebapps = '"C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps"'
-            bat "if exist ${tomcatWebapps}\\Demospringboot (rmdir /S /Q ${tomcatWebapps}\\Demospringboot)"
-            bat "copy \"${warFile}\" ${tomcatWebapps}\\Demospringboot.war"
-            echo "🔹 Backend deployed!"
+        // ===== BACKEND DEPLOY =====
+        stage('Deploy Backend to Tomcat') {
+            steps {
+                bat '''
+                if exist "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\Demospringboot.war" (
+                    del /Q "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\Demospringboot.war"
+                )
+                if exist "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\Demospringboot" (
+                    rmdir /S /Q "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\Demospringboot"
+                )
+                copy "BACKEND\\Demospringbootproject\\target\\*.war" "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\"
+                '''
+            }
         }
-    }
-}
 
+    }
 
     post {
         success {
-            echo '✅ Deployment Successful! Frontend on /ReactSpringBootCRUD, Backend on /Demospringboot'
+            echo 'Deployment Successful!'
         }
         failure {
-            echo '❌ Pipeline Failed. Check logs.'
+            echo 'Pipeline Failed.'
         }
     }
 }
